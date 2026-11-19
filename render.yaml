@@ -1,0 +1,40 @@
+# ==========================================
+# Render Blueprint (Infrastructure as Code)
+# ==========================================
+services:
+  # Web Service Express API
+  - type: web
+    name: portal-siswa-api
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run migrate:prod && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: portal-siswa-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
+      - key: BOBOT_NILAI_SEKOLAH
+        value: "40"
+      - key: BOBOT_NILAI_INDUSTRI
+        value: "60"
+    disk:
+      name: uploads-data
+      mountPath: /var/data/uploads
+      sizeGB: 1
+
+# Managed PostgreSQL Database
+databases:
+  - name: portal-siswa-db
+    databaseName: portal_siswa
+    user: postgres
+    plan: starter

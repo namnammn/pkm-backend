@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Database PostgreSQL 16
+  db:
+    image: postgres:16-alpine
+    container_name: portal_siswa_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_DB: ${POSTGRES_DB:-portal_siswa}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Inisialisasi otomatis schema dan seed saat container pertama kali dibuat
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d portal_siswa"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pkm_network
+
+  # Backend REST API Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portal_siswa_api
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres123}@db:5432/${POSTGRES_DB:-portal_siswa}
+      JWT_SECRET: ${JWT_SECRET:-super-production-jwt-secret-key-pkm-2026}
+      UPLOAD_DIR: /app/uploads
+      BOBOT_NILAI_SEKOLAH: ${BOBOT_NILAI_SEKOLAH:-40}
+      BOBOT_NILAI_INDUSTRI: ${BOBOT_NILAI_INDUSTRI:-60}
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - pkm_network
+
+volumes:
+  pgdata:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  pkm_network:
+    driver: bridge
