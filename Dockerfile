@@ -27,7 +27,6 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3000
 
 # Buat direktori uploads dan beri hak akses ke user node
 RUN mkdir -p /app/uploads && chown -R node:node /app
@@ -38,10 +37,11 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/schema.sql ./schema.sql
 COPY --from=builder /app/seed.sql ./seed.sql
+COPY start.sh ./start.sh
 
 # Beralih ke non-root user demi keamanan
 USER node
 
 EXPOSE 3000
 
-CMD ["node", "dist/server.js"]
+CMD ["/bin/sh", "start.sh"]
