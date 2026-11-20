@@ -2,6 +2,7 @@
   "name": "backend-web-portal-siswa",
   "version": "1.0.0",
   "description": "Backend REST API untuk Web Portal Siswa (PKL, Absensi, Keuangan)",
+  "type": "module",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
